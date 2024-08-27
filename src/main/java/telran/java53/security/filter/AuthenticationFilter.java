@@ -3,6 +3,8 @@ package telran.java53.security.filter;
 import java.io.IOException;
 import java.security.Principal;
 import java.util.Base64;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.core.annotation.Order;
@@ -19,7 +21,9 @@ import jakarta.servlet.http.HttpServletRequestWrapper;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import telran.java53.accounting.dao.UserAccountRepository;
+import telran.java53.accounting.model.Role;
 import telran.java53.accounting.model.UserAccount;
+import telran.java53.security.model.User;
 
 @Component
 @RequiredArgsConstructor
@@ -40,7 +44,10 @@ public class AuthenticationFilter implements Filter {
 				if (!BCrypt.checkpw(credentials[1], userAccount.getPassword())) {
 					throw new RuntimeException();
 				}
-				request = new WrappedRequest(request, userAccount.getLogin());
+				Set<String> roles = userAccount.getRoles().stream()
+													.map(Role::name)
+													.collect(Collectors.toSet());
+				request = new WrappedRequest(request, userAccount.getLogin(), roles);
 			} catch (Exception e) {
 				response.sendError(401);
 				return;
@@ -64,15 +71,17 @@ public class AuthenticationFilter implements Filter {
 
 	private class WrappedRequest extends HttpServletRequestWrapper {
 		private String login;
+		private Set<String> roles;
 
-		public WrappedRequest(HttpServletRequest request, String login) {
+		public WrappedRequest(HttpServletRequest request, String login, Set<String> roles) {
 			super(request);
 			this.login = login;
+			this.roles = roles;
 		}
 
 		@Override
 		public Principal getUserPrincipal() {
-			return () -> login;
+			return new User(login, roles);
 		}
 	}
 }
