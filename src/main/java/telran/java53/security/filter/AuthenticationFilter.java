@@ -6,6 +6,7 @@ import java.util.Base64;
 
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
 
 import jakarta.servlet.Filter;
@@ -49,7 +50,10 @@ public class AuthenticationFilter implements Filter {
 	}
 
 	private boolean checkEndpoint(String method, String path) {
-		return !("POST".equalsIgnoreCase(method) && path.matches("/account/register"));
+		return !(
+				(HttpMethod.POST.matches(method) && path.matches("/account/register"))
+				|| HttpMethod.GET.matches(method) && path.matches("/forum/posts.+")
+			);
 	}
 
 	private String[] getCredentials(String header) {

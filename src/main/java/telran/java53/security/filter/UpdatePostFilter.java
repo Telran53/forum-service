@@ -13,11 +13,17 @@ import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
+import telran.java53.post.dao.PostRepository;
+import telran.java53.post.model.Post;
 
 @Component
-@Order(30)
-public class UpdateByOwnerFilter implements Filter {
-	
+@RequiredArgsConstructor
+@Order(50)
+public class UpdatePostFilter implements Filter {
+
+	final PostRepository postRepository;
+
 	@Override
 	public void doFilter(ServletRequest req, ServletResponse resp, FilterChain chain)
 			throws IOException, ServletException {
@@ -26,20 +32,23 @@ public class UpdateByOwnerFilter implements Filter {
 		if (checkEndpoint(request.getMethod(), request.getServletPath())) {
 			String principal = request.getUserPrincipal().getName();
 			String[] parts = request.getServletPath().split("/");
-			String owner = parts[parts.length - 1];
-			if (!principal.equalsIgnoreCase(owner)) {
-				response.sendError(403, "Not authorized");
+			String postId = parts[parts.length - 1];
+			Post post = postRepository.findById(postId).orElse(null);
+			if (post == null) {
+				response.sendError(404, "Not found");
 				return;
 			}
+			if (!principal.equals(post.getAuthor())) {
+				response.sendError(403, "You are not allowed to access this resource");
+				return;
+			}
+
 		}
 		chain.doFilter(request, response);
 	}
 
 	private boolean checkEndpoint(String method, String path) {
-		return (
-				HttpMethod.PUT.matches(method) && path.matches("/account/user/\\w+")
-				|| HttpMethod.POST.matches(method) && path.matches("/forum/post/\\w+")
-				|| HttpMethod.PUT.matches(method) && path.matches("/forum/post/\\w+/comment/\\w+")
-				);
+		return (HttpMethod.PUT.matches(method) && path.matches("/forum/post/\\w+"));
 	}
+
 }
