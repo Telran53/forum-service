@@ -1,0 +1,5 @@
+{"properties": [{
+  "name": "password.period",
+  "type": "java.lang.Long",
+  "description": "The period after which the password expires"
+}]}
