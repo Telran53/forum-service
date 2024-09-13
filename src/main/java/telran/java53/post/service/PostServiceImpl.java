@@ -15,6 +15,7 @@ import telran.java53.post.dto.PostDto;
 import telran.java53.post.dto.exceptions.PostNotFoundException;
 import telran.java53.post.model.Comment;
 import telran.java53.post.model.Post;
+import telran.java53.post.service.logging.PostLogger;
 
 @Service
 @RequiredArgsConstructor
@@ -44,6 +45,7 @@ public class PostServiceImpl implements PostService {
 		return modelMapper.map(post, PostDto.class);
 	}
 
+	@PostLogger
 	@Override
 	public PostDto updatePost(String id, NewPostDto newPostDto) {
         Post post = postRepository.findById(id).orElseThrow(PostNotFoundException::new);
@@ -72,6 +74,7 @@ public class PostServiceImpl implements PostService {
         return modelMapper.map(post, PostDto.class);
 	}
 
+	@PostLogger
 	@Override
 	public void addLike(String id) {
 		Post post = postRepository.findById(id).orElseThrow(PostNotFoundException::new);
